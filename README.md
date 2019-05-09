@@ -5,14 +5,18 @@
 - jieba
 - tqdm
 - jupyter notebook
+- tensorflow-gpu 1.13.1 (model_bert_basic)
+- bert-as-service
 
 ##### Preprocessing
 - Use `Preprocessing.ipynb` to tokenize sentences and turn them into sequences of int values.
 - Use `WordEmbedding.ipynb` to pretrain word vectors.
+- Use `model_bert_basic/preprocessing.py` to generate datasets.
 
 ##### Training
 - Use `RNN_basic.ipynb` to train a simple model w/o attention mechanism.
 - Use `RNN_complex.ipynb` to train a attentional model.
+- Use `model_bert_basic/predict.py` to train a model based on BERT.
 
 ##### Experiment
 - Add Convolution Layer
