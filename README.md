@@ -17,8 +17,8 @@
 ##### Experiment
 - Add Convolution Layer
 	- Use `Var1_Simple_CNN_network.ipynb` to train a CNN model w/o attention
-	- Use `Var2_Convolution_before_RNN` to train a RNN_basic model w/ additional Convolution Layer
-	- Use `Var3_Convolution_Layer_after_Attentional_bi-LSTM_network` to train a RNN_complex mode w/ additional Convolution Layer
+	- Use `Var2_Convolution_before_RNN.ipynb` to train a RNN_basic model w/ additional Convolution Layer
+	- Use `Var3_Convolution_Layer_after_Attentional_bi-LSTM_network.ipynb` to train a RNN_complex mode w/ additional Convolution Layer
 
 ##### Data & Submission
 https://www.kaggle.com/c/fake-news-pair-classification-challenge/
