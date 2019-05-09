@@ -1,0 +1,10 @@
+#/usr/bin/env bash
+
+bert-serving-start                                          \
+    -port 5555                                              \
+    -port_out 5556                                          \
+    -model_dir ../bert/pretrained/uncased_L-24_H-1024_A-16   \
+    -max_seq_len 60                                         \
+    -mask_cls_sep                                           \
+    -num_worker 1                                           \
+    -pooling_layer -2                             
