@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from sklearn.metrics import f1_score
 
 class SimpleLSTM(nn.Module):
     def __init__(self, demb, demb_pos, dmodel, dff, voc_sz, pos_voc_sz, max_len, out_class, dropout=0.5):
@@ -7,8 +8,6 @@ class SimpleLSTM(nn.Module):
         
         self.bidir = True
         
-        if out_class == 2:
-            out_class = 1
         self.out_class = out_class
         
         self.encoder = nn.Sequential(
@@ -49,7 +48,7 @@ class SimpleLSTM(nn.Module):
     
 class Criterion:
     def __init__(self, task, cuda=True):
-        self.task = task
+        self.task = 2
         self.floattensor = "torch.FloatTensor"
         if self.task==2:
             self.loss_func = nn.CrossEntropyLoss()
@@ -80,4 +79,22 @@ class Criterion:
         
         comp = (predict.view(batch_size,-1)==y.view(batch_size,-1)).type(self.floattensor)
         accu = torch.mean(comp)
-        return accu
+        return accu.item()
+
+    def f1_compute(self, logits, y):
+        # everyone uses macro, but class imbalance should use micro
+        batch_size = y.shape[0]
+        if self.task==2:
+            _, predict = torch.max(logits, dim=1)
+        else:
+            predict = (logits >= 0.5)
+
+        y = y.type(predict.dtype)
+
+        # to cpu
+        y = y.cpu()
+        predict = predict.cpu()
+
+        f1 = f1_score(y_true=y.view(batch_size,-1), y_pred=predict.view(batch_size,-1), average='macro')
+
+        return f1

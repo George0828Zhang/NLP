@@ -80,9 +80,12 @@ class Dataset:
         self.pos_seqs = []
         
         ######################################
-        lendist = [len(x) for x in pos_tokens]
-        import matplotlib.pyplot as plt
-        plt.hist(lendist)
+        # lendist = [len(x) for x in pos_tokens]
+        # import matplotlib.pyplot as plt
+        # plt.hist(lendist)
+        # plt.show()
+        # plt.hist(self.labels)
+        # plt.show()
         ######################################
         
         for pos in pos_tokens:            
