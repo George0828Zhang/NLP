@@ -2,11 +2,13 @@ import sys
 import csv
 import numpy as np
 import wordninja
+from nltk import word_tokenize
 from nltk import pos_tag
 from tqdm import tqdm_notebook as tqdm
 from multiprocessing import Pool
 import torch
 from torch.utils import data
+from copy import deepcopy
 
 class Dataset:
     def __init__(self, filename, task=0, n_workers=4, testlabel=None):
@@ -47,6 +49,7 @@ class Dataset:
     def _subtask(self, s):
         s = s.lower()
         tokens = wordninja.split(s)
+        #tokens = word_tokenize(s)
         pos = pos_tag(tokens)
         return pos
     
@@ -130,12 +133,58 @@ class Dataset:
                 lines.append(line)
             return lines
         
-def make_data_generator(filename, task, batch_size, n_workers=4, testlabel=None, load_vocabs=None, max_len=512, vcutoff=99999, shuffle=True):    
+def validation_split(data_set, split=0.1):
+    sequence = data_set.sequence
+    pos_seqs = data_set.pos_seqs
+    lbls = data_set.labels
+    sz = data_set.size
+    space = data_set.lbspace.values()
+        
+    # find all labels
+    indices = [[] for _ in space]
+    for i, l in enumerate(lbls):
+        indices[int(l)].append(i)
+    
+    # cut split
+    cutoffs = [int(len(x)*split) for x in indices]
+    
+    # make validation 
+    train_inds = []
+    validation_inds = []
+    for tp in space:
+        cut = cutoffs[tp]
+        train_inds += indices[tp][cut:]
+        validation_inds += indices[tp][:cut]
+    
+    validation_set = deepcopy(data_set)
+    validation_set.sequence = np.asarray([sequence[i] for i in validation_inds], dtype=np.int64)
+    validation_set.pos_seqs = np.asarray([pos_seqs[i] for i in validation_inds], dtype=np.int64)
+    validation_set.labels = np.asarray([lbls[i] for i in validation_inds], dtype=np.int64)
+    validation_set.size = len(validation_inds)
+    
+    # trimdown
+    data_set.sequence = np.asarray([sequence[i] for i in train_inds], dtype=np.int64)
+    data_set.pos_seqs = np.asarray([pos_seqs[i] for i in train_inds], dtype=np.int64)
+    data_set.labels = np.asarray([lbls[i] for i in train_inds], dtype=np.int64)
+    data_set.size = len(train_inds)
+    print("[info] {} train. {} valid.".format(data_set.size, validation_set.size))
+    return data_set, validation_set
+
+def make_data_generator(filename, task, batch_size, val_split=0, n_workers=4, testlabel=None, load_vocabs=None, max_len=512, vcutoff=99999, shuffle=True):
     data_set = Dataset(filename, task, n_workers, testlabel)
     data_set.prepare(load_vocabs, max_len, vcutoff)
+    
+    if val_split > 0:
+        data_set, val_set = validation_split(data_set, split=0.1)        
     
     params = {'batch_size':batch_size,
          'shuffle': shuffle,
          'num_workers': n_workers}
-    generator = data.DataLoader(data_set, **params)
-    return data_set, generator
+    
+    train_generator = data.DataLoader(data_set, **params)
+    
+    if val_split > 0:
+        val_generator = data.DataLoader(val_set, **params)
+        return (data_set, train_generator), (val_set, val_generator)
+    
+    return data_set, train_generator
