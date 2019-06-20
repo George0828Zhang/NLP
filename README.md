@@ -26,3 +26,15 @@
 
 ##### Data & Submission
 https://www.kaggle.com/c/fake-news-pair-classification-challenge/
+
+### hw2
+##### Required packages
+- pytorch 1.0.1
+- wordninja (pip install wordninja)
+- nltk
+- sklearn (for metrics)
+- tqdm 
+- jupyter notebook
+
+##### How to execute
+- To train biLSTM+POS models, open biLSTM-POS/Trainer.ipynb, set the datapaths, then run all cells.
