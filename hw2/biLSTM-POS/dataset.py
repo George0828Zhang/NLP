@@ -10,6 +10,7 @@ import torch
 from torch.utils import data
 from copy import deepcopy
 
+# This module reads input data and formulate it into data that can be used by the lstm models. It includes preprocessing.
 class Dataset:
     def __init__(self, filename, task=0, n_workers=4, testlabel=None):
         lines = self._read_tsv(filename)
@@ -39,13 +40,12 @@ class Dataset:
                     index = self.id2index[ids]
                     self.labels[index] = [self.lbspace[tag]]
         
-        #self.ids = np.asarray(self.ids, dtype=np.int64)
         self.labels = np.asarray(self.labels, dtype=np.int64)
         self.size = len(self.tweets)
         
         print("[info] {} data.".format(self.size))
             
-            
+    # preprocessing: cut the sentence into words, including those in hashtags, which are not seperated by whitespace also, perform POS tagging on the segmented sentence.
     def _subtask(self, s):
         s = s.lower()
         tokens = wordninja.split(s)
@@ -53,6 +53,7 @@ class Dataset:
         pos = pos_tag(tokens)
         return pos
     
+    # Main preprocessing function. Tokenization, POS tagging, vocabulary construction, token to id conversion, padding and truncating. 
     def prepare(self, load_vocabs=None, max_len=512, vcutoff=99999):
         with Pool(self.n_workers) as p:
             chunksize = 100
@@ -132,7 +133,8 @@ class Dataset:
                     line = list(unicode(cell, 'utf-8') for cell in line)
                 lines.append(line)
             return lines
-        
+
+# splits the given dataset into train/validation sets, according to the ratio given. Data are split according to labels as well, so that we have similar distribution between training and validation set.
 def validation_split(data_set, split=0.1):
     sequence = data_set.sequence
     pos_seqs = data_set.pos_seqs
@@ -170,12 +172,13 @@ def validation_split(data_set, split=0.1):
     print("[info] {} train. {} valid.".format(data_set.size, validation_set.size))
     return data_set, validation_set
 
+# function to create a generator for batches to be fed into LSTMs. Optionally calls validation_split to create train/validation split.
 def make_data_generator(filename, task, batch_size, val_split=0, n_workers=4, testlabel=None, load_vocabs=None, max_len=512, vcutoff=99999, shuffle=True):
     data_set = Dataset(filename, task, n_workers, testlabel)
     data_set.prepare(load_vocabs, max_len, vcutoff)
     
     if val_split > 0:
-        data_set, val_set = validation_split(data_set, split=0.1)        
+        data_set, val_set = validation_split(data_set, split=val_split)        
     
     params = {'batch_size':batch_size,
          'shuffle': shuffle,
@@ -184,7 +187,7 @@ def make_data_generator(filename, task, batch_size, val_split=0, n_workers=4, te
     train_generator = data.DataLoader(data_set, **params)
     
     if val_split > 0:
-        val_generator = data.DataLoader(val_set, **params)
+        val_generator = data.DataLoader(val_set, shuffle=False, batch_size=batch_size, num_workers=n_workers)
         return (data_set, train_generator), (val_set, val_generator)
     
     return data_set, train_generator

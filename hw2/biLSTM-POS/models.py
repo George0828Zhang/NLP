@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from sklearn.metrics import f1_score
 
+# Simple LSTM model which encodes both the words and the pos tags, concats them, then go through a feed forward net, before outputing the scores for each class. Softmax is not applied here, instead it's applied in loss function.
 class SimpleLSTM(nn.Module):
     def __init__(self, demb, demb_pos, dmodel, dff, voc_sz, pos_voc_sz, max_len, out_class, dropout=0.5):
         super(SimpleLSTM, self).__init__()
@@ -48,7 +49,7 @@ class SimpleLSTM(nn.Module):
         return logits
     
     
-    
+# Enhanced model which similarly encodes the sentence and pos tag, but an additional self attention layer is introduced, so that the model can adjust its focus of words.
 class SelfAttnLSTM(nn.Module):
     def __init__(self, demb, demb_pos, dmodel, dff, voc_sz, pos_voc_sz, max_len, out_class, dropout=0.5):
         super(SelfAttnLSTM, self).__init__()
@@ -103,12 +104,7 @@ class SelfAttnLSTM(nn.Module):
         return logits
     
     
-    
-    
-    
-    
-    
-
+# This is a module for convenient use of loss, accuracy and f1 computing. Focalloss is borrowed from https://github.com/clcarwin/focal_loss_pytorch
 from focalloss import FocalLoss
 class Criterion:
     def __init__(self, task, cuda=True):
